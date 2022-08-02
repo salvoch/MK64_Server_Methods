@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using CourseHandler;
 
 namespace SocketServer
 {
@@ -34,7 +35,7 @@ namespace SocketServer
             Console.WriteLine("Waiting for a connection...");
 
             //Variable initiations to check if queries are successful
-            bool courseCheck = false;
+            int trackId = -1;
 
             //Initiate handler socket
             handler = listener.Accept();
@@ -59,8 +60,7 @@ namespace SocketServer
                             Console.WriteLine("Data: " + data); //TODO--delete
                             JObject jstr = JObject.Parse(jstring[0]);
                             Console.WriteLine("Received json: " + jstr);
-                            int trackId = Convert.ToInt32(jstr["trackId"]);
-                            courseCheck = checkCourseExists(trackId);
+                            trackId = Convert.ToInt32(jstr["trackId"]);
                         }
                         catch (Newtonsoft.Json.JsonReaderException jsonEx)
                         {
@@ -75,11 +75,8 @@ namespace SocketServer
                     }
                 }
 
-                JObject resp = new JObject
-                {
-                    ["available"] = courseCheck,
-                    ["path"] = "A:\\Emulators\\NEWERVERSION\\Scripts\\tempfiles\\ghost-dump.json" // TODO -- Figure out how to find this on a users comp
-                };
+                //(Temp) Check the CourseHandler files to see if we have a ghost
+                JObject resp = CoursePaths.course_file_json(trackId);
 
                 //Write response, delete maybe
                 string stringResp = resp.ToString();
@@ -89,39 +86,10 @@ namespace SocketServer
                 handler.Send(Encoding.ASCII.GetBytes(stringResp));
                 handler.Shutdown(SocketShutdown.Both);
                 handler = listener.Accept();
-
-                courseCheck = false;
+                trackId = -1;
             }
 
             handler.Close();
-        }
-        public static bool checkCourseExists(int courseId)
-        {
-            /*TODO - how do we check this in WPF? Logic here to ckeck if a courseID has a ghost or not
-             * Breakdown:
-             *  Check if the user has this cousre selected as flap or 3lap (or none) in wpf
-             *      If it is selected, 
-             *          Query gus' server with type/courseid
-             *          If it exists:
-             *              download file
-             *              Write file for reading
-             *              Return True
-             *          If it doesn't
-             *              Write to WPF that it doesn't exist (Or is this check done before)
-             *              reutn False
-             *      If it is not selected in either: 
-             *          return false
-             */
-
-            //For now, return true if ID is luigi
-            if (courseId == 0)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
         }
     }
 }
