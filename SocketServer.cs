@@ -7,6 +7,19 @@ using CourseHandler;
 
 namespace SocketServer
 {
+    //Object that 
+    public class EmulatorResponse
+    {
+        public int trackId;
+        public string function;
+
+        public EmulatorResponse(int tid, string func)
+        {
+            trackId = tid;
+            function = func;
+        }
+    }
+
     public class SynchronousSocketServer
     {
         // Data buffer for incoming data.
@@ -34,9 +47,6 @@ namespace SocketServer
         {
             Console.WriteLine("Waiting for a connection...");
 
-            //Variable initiations to check if queries are successful
-            int trackId = -1;
-
             //Initiate handler socket
             handler = listener.Accept();
 
@@ -55,12 +65,18 @@ namespace SocketServer
                     {
                         try
                         {
-                            //Parse json, discard <EOF>
-                            string[] jstring = data.Split(new[] { "<EOF>" }, StringSplitOptions.None);
-                            Console.WriteLine("Data: " + data); //TODO--delete
-                            JObject jstr = JObject.Parse(jstring[0]);
-                            Console.WriteLine("Received json: " + jstr);
-                            trackId = Convert.ToInt32(jstr["trackId"]);
+                            //Parse data into EmulatorResponse Object
+                            EmulatorResponse emuResp = parse_response(data);
+
+                            //(Temp) Check the CourseHandler files to see if we have a ghost
+                            JObject replyResp = CoursePaths.course_file_json(emuResp.trackId);
+
+                            //Write response, delete console.writelline maybe
+                            string stringResp = replyResp.ToString();
+                            Console.WriteLine("Sending this: " + stringResp);
+
+                            //Send response, emulator will continue once response returns.
+                            handler.Send(Encoding.ASCII.GetBytes(stringResp));
                         }
                         catch (Newtonsoft.Json.JsonReaderException jsonEx)
                         {
@@ -71,25 +87,38 @@ namespace SocketServer
                         {
                             Console.WriteLine(ex.Message);
                         }
+                        finally
+                        {
+                            //Have to shut down, and re-listen to continue
+                            handler.Shutdown(SocketShutdown.Both);
+                            handler = listener.Accept();
+                        }
                         break;
                     }
                 }
 
-                //(Temp) Check the CourseHandler files to see if we have a ghost
-                JObject resp = CoursePaths.course_file_json(trackId);
 
-                //Write response, delete maybe
-                string stringResp = resp.ToString();
-                Console.WriteLine("Sending this: " + stringResp);
-
-                //Have to send, shut down, and re-accept or emulator hangs
-                handler.Send(Encoding.ASCII.GetBytes(stringResp));
-                handler.Shutdown(SocketShutdown.Both);
-                handler = listener.Accept();
-                trackId = -1;
             }
-
             handler.Close();
+        }
+
+        public static EmulatorResponse parse_response(string data)
+        {
+            try
+            {
+                //Parse json, discard <EOF>
+                string[] jstring = data.Split(new[] { "<EOF>" }, StringSplitOptions.None);
+                Console.WriteLine("Data: " + data); //TODO--delete
+                JObject jstr = JObject.Parse(jstring[0]);
+                Console.WriteLine("Received json: " + jstr);
+                int trackId = Convert.ToInt32(jstr["trackId"]); ;
+                string func = (string)jstr["function"];
+                return new EmulatorResponse(trackId , func );
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
     }
 }
