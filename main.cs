@@ -1,11 +1,19 @@
 ﻿using System;
 using SocketServer;
+using GhostDownload;
 
 namespace MainSpace
 {
     class RunProgram
     {
         public static void Main(string[] args)
+        {
+            GhostQuery gq = new GhostQuery();
+            gq.get_record(3, "flap");
+
+            Console.WriteLine("Done!");
+        }
+        public static void tempMain(string[] args)
         {
             //kick's off the watcher loop
             SynchronousSocketServer mk64socket = new SynchronousSocketServer();
