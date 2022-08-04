@@ -1,4 +1,4 @@
-﻿using System.Text;
+﻿using System.Net;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using GameData;
@@ -36,6 +36,8 @@ namespace GhostDownload
     class GhostQuery
     {
         public static string siteUrl = "https://us-central1-mk64-ad77f.cloudfunctions.net/";
+        public RecordQuery recordQuery;
+        public bool available = false;
 
         //Build payload to query server to retrieve link for ghost data
         //Example curl:
@@ -55,9 +57,8 @@ namespace GhostDownload
             //Send it!
             RestResponse response = client.Execute(request);
 
-            //print:
-            Console.WriteLine("RESPONSE: " + response);
-            Console.WriteLine("CONTENT: " + response.Content);
+            //print: TODO - DELETE
+            Console.WriteLine("Server response content: " + response.Content);
 
             //If response is not ok, log it to console
             if (response.StatusCode.ToString() != "OK")
@@ -72,10 +73,63 @@ namespace GhostDownload
                 parse_record_response(response.Content);
             }
         }
+        public string download_ghost_json()
+        {
+            if (available)
+            {
+                //TODO - try-except, etf
+                //get request the file!
+                var client = new RestClient(recordQuery.fileDownloadUrl);
+                var request = new RestRequest("", Method.Get);
+                RestResponse response = client.Execute(request);
+                Console.WriteLine(response);
+                Console.WriteLine(response.Content);
+                return response.Content;
+            } else
+            {
+                //raise error
+                Console.WriteLine("Ghost not available, cannot download"); //TODO exception/catch??
+                return "NA";
+            }
+        }
 
         public void parse_record_response(string stringResponse)
         {
-            //CONVERT TO JSSON, CLAL THE RecordQuery object here
+            //TODO - TRY? Raise/catch/etc/ Also, handle no response so it doesn't hang
+            JObject jsonResponse = JObject.Parse(stringResponse);
+
+            if (jsonResponse.ContainsKey("fileDownloadUrl")) {
+                //Build record as normal
+                recordQuery = new RecordQuery(
+                jsonResponse.GetValue("categorySlug").ToString(),
+                jsonResponse.GetValue("created").ToString(),
+                jsonResponse.GetValue("fileName").ToString(),
+                jsonResponse.GetValue("link").ToString(),
+                jsonResponse.GetValue("note").ToString(),
+                jsonResponse.GetValue("score").ToString(),
+                jsonResponse.GetValue("subcategorySlug").ToString(),
+                jsonResponse.GetValue("userId").ToString(),
+                jsonResponse.GetValue("entryId").ToString(),
+                jsonResponse.GetValue("fileDownloadUrl").ToString());
+
+                available = true;
+            } else {
+
+                //Build record without filename and filedownloadurl 
+                recordQuery = new RecordQuery(
+                jsonResponse.GetValue("categorySlug").ToString(),
+                jsonResponse.GetValue("created").ToString(),
+                "NA",
+                jsonResponse.GetValue("link").ToString(),
+                jsonResponse.GetValue("note").ToString(),
+                jsonResponse.GetValue("score").ToString(),
+                jsonResponse.GetValue("subcategorySlug").ToString(),
+                jsonResponse.GetValue("userId").ToString(),
+                jsonResponse.GetValue("entryId").ToString(),
+                "NA");
+
+                available = false;
+            }
         }
     }
 }

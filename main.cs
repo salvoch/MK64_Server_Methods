@@ -9,7 +9,8 @@ namespace MainSpace
         public static void Main(string[] args)
         {
             GhostQuery gq = new GhostQuery();
-            gq.get_record(3, "flap");
+            gq.get_record(8, "3lap");
+            gq.download_ghost_json();
 
             Console.WriteLine("Done!");
         }
