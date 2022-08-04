@@ -38,6 +38,7 @@ namespace GhostDownload
         public static string siteUrl = "https://us-central1-mk64-ad77f.cloudfunctions.net/";
         public RecordQuery recordQuery;
         public bool available = false;
+        public string path;
 
         //Build payload to query server to retrieve link for ghost data
         //Example curl:
@@ -91,6 +92,13 @@ namespace GhostDownload
                 Console.WriteLine("Ghost not available, cannot download"); //TODO exception/catch??
                 return "NA";
             }
+        }
+
+        //Write ghost to a file for emulator to read
+        public static void write_file(string file_path, string jsonString)
+        {
+            //TODO - get path of current execution, append the \\ghostloader\\ghost.json to it
+            File.WriteAllText(file_path, jsonString);
         }
 
         public void parse_record_response(string stringResponse)
