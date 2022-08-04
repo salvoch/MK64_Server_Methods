@@ -38,7 +38,8 @@ namespace GhostDownload
         public static string siteUrl = "https://us-central1-mk64-ad77f.cloudfunctions.net/";
         public RecordQuery recordQuery;
         public bool available = false;
-        public string path;
+        public string file_dl_path = "A:\\Emulators\\NEWERVERSION\\Scripts\\ghostloader\\ghost.json"; //TODO - get this from user path
+        public string file_dl_response;
 
         //Build payload to query server to retrieve link for ghost data
         //Example curl:
@@ -74,7 +75,7 @@ namespace GhostDownload
                 parse_record_response(response.Content);
             }
         }
-        public string download_ghost_json()
+        public void download_ghost_json()
         {
             if (available)
             {
@@ -85,20 +86,32 @@ namespace GhostDownload
                 RestResponse response = client.Execute(request);
                 Console.WriteLine(response);
                 Console.WriteLine(response.Content);
-                return response.Content;
+                file_dl_response = response.Content;
             } else
             {
                 //raise error
                 Console.WriteLine("Ghost not available, cannot download"); //TODO exception/catch??
-                return "NA";
+                file_dl_response = "NA";
             }
         }
 
         //Write ghost to a file for emulator to read
-        public static void write_file(string file_path, string jsonString)
+        public void write_file()
         {
             //TODO - get path of current execution, append the \\ghostloader\\ghost.json to it
-            File.WriteAllText(file_path, jsonString);
+            File.WriteAllText(file_dl_path, file_dl_response);
+        }
+
+        //Return the response to send to emulator
+        public JObject build_emulator_response()
+        {
+            JObject resp = new JObject
+            {
+                ["available"] = available,
+                ["path"] = file_dl_path //TODO - if it's not available, should we be sending an actual path here?
+            };
+
+            return resp;
         }
 
         public void parse_record_response(string stringResponse)

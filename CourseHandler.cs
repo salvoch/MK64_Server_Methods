@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
+﻿//TODO - DELETE THIS COMPLETELY
+
+using Newtonsoft.Json.Linq;
 
 /*TODO - how do we check this in WPF? Logic here to ckeck if a courseID has a ghost or not
  * Breakdown:

@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Newtonsoft.Json.Linq;
-using CourseHandler;
+using GhostDownload;
 
 namespace SocketServer
 {
@@ -68,8 +68,17 @@ namespace SocketServer
                             //Parse data into EmulatorResponse Object
                             EmulatorResponse emuResp = parse_response(data);
 
-                            //(Temp) Check the CourseHandler files to see if we have a ghost
-                            JObject replyResp = CoursePaths.course_file_json(emuResp.trackId);
+                            //Function to read a ghost from server
+                            JObject replyResp;
+                            if (emuResp.function == "check_for_ghost")
+                            {
+                                replyResp = check_for_ghost_response(emuResp.trackId);
+                            }
+                            else //TODO - Logic here to write ghost
+                            {
+                                replyResp = no_function_ghost_response();
+                            }
+
 
                             //Write response, delete console.writelline maybe
                             string stringResp = replyResp.ToString();
@@ -100,6 +109,28 @@ namespace SocketServer
 
             }
             handler.Close();
+        }
+
+        //run the code in GhostDownload, return the response to the Emulator
+        public JObject check_for_ghost_response(int trackId)
+        {
+            GhostQuery gq = new GhostQuery();
+            gq.get_record(trackId, "3lap"); //TODO -- This type will be set by the GUI
+            gq.download_ghost_json(); //Download file if it exists
+            gq.write_file(); //Write that file to a directory
+            return gq.build_emulator_response();
+        }
+
+        //When we get a function that doesn't exist, still have to respond
+        public JObject no_function_ghost_response()
+        {
+            JObject resp = new JObject
+            {
+                ["available"] = false,
+                ["path"] = "NA"
+            };
+
+            return resp;
         }
 
         public static EmulatorResponse parse_response(string data)

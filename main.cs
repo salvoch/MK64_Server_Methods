@@ -6,14 +6,11 @@ namespace MainSpace
 {
     class RunProgram
     {
-        public static void Main(string[] args)
-        {
-            GhostQuery gq = new GhostQuery();
-            gq.get_record(8, "3lap");
-            string jsonFile = gq.download_ghost_json();
-            Console.WriteLine("Done!");
-        }
         public static void tempMain(string[] args)
+        {
+
+        }
+        public static void Main(string[] args)
         {
             //kick's off the watcher loop
             SynchronousSocketServer mk64socket = new SynchronousSocketServer();
