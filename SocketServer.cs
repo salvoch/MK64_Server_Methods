@@ -7,7 +7,7 @@ using GhostDownload;
 
 namespace SocketServer
 {
-    //Object that 
+    //Object that maps response from emulator
     public class EmulatorResponse
     {
         public int trackId;
@@ -74,7 +74,7 @@ namespace SocketServer
                             {
                                 replyResp = check_for_ghost_response(emuResp.trackId);
                             }
-                            else //TODO - Logic here to write ghost
+                            else //TODO - Logic here to save ghost to gus server
                             {
                                 replyResp = no_function_ghost_response();
                             }
@@ -143,7 +143,7 @@ namespace SocketServer
                 JObject jstr = JObject.Parse(jstring[0]);
                 Console.WriteLine("Received json: " + jstr);
                 int trackId = Convert.ToInt32(jstr["trackId"]); ;
-                string func = (string)jstr["function"];
+                string func = jstr.GetValue("function").ToString();
                 return new EmulatorResponse(trackId , func );
             }
             catch (Exception ex)
