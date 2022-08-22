@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Media;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using GhostDownload;
+using Win32Form1Namespace;
 
 namespace SocketServer
 {
@@ -72,13 +74,20 @@ namespace SocketServer
                             JObject replyResp;
                             if (emuResp.function == "check_for_ghost")
                             {
-                                replyResp = check_for_ghost_response(emuResp.trackId);
+                                string lap_type = prompt_for_lap_type();
+                                if (lap_type != "NA")
+                                {
+                                    replyResp = check_for_ghost_response(emuResp.trackId, lap_type);
+                                } 
+                                else
+                                {
+                                    replyResp = no_ghost_response();
+                                }
                             }
                             else //TODO - Logic here to save ghost to gus server
                             {
-                                replyResp = no_function_ghost_response();
+                                replyResp = no_ghost_response();
                             }
-
 
                             //Write response, delete console.writelline maybe
                             string stringResp = replyResp.ToString();
@@ -112,17 +121,30 @@ namespace SocketServer
         }
 
         //run the code in GhostDownload, return the response to the Emulator
-        public JObject check_for_ghost_response(int trackId)
+        public JObject check_for_ghost_response(int trackId, string lap_type)
         {
             GhostQuery gq = new GhostQuery();
-            gq.get_record(trackId, "3lap"); //TODO -- This type will be set by the GUI
+            gq.get_record(trackId, lap_type);
             gq.download_ghost_json(); //Download file if it exists
             gq.write_file(); //Write that file to a directory
             return gq.build_emulator_response();
         }
 
+        private string prompt_for_lap_type()
+        {
+            //Alert user of prompt
+            SystemSounds.Exclamation.Play();
+
+            //Load windows form from dlPrmomptForm.cs
+            Win32Form1 form1 = new Win32Form1();
+            System.Windows.Forms.Application.Run(form1);
+
+            //Return lap type
+            return form1.type_result;
+        }
+
         //When we get a function that doesn't exist, still have to respond
-        public JObject no_function_ghost_response()
+        public JObject no_ghost_response()
         {
             JObject resp = new JObject
             {
